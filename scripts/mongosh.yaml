@@ -1,0 +1,16 @@
+#cloud-config-mongosh
+write_files:
+  - path: /etc/yum.repos.d/mongodb-org-7.0.repo
+    content: |
+      [mongodb-org-7.0]
+      name=MongoDB Repository
+      baseurl=https://repo.mongodb.org/yum/amazon/2023/mongodb-org/7.0/x86_64/
+      gpgcheck=1
+      enabled=1
+      gpgkey=https://pgp.mongodb.com/server-7.0.asc
+    owner: 'root:root'
+    permissions: '0644'
+
+runcmd:
+  - sudo yum update -y
+  - sudo yum install mongodb-mongosh-shared-openssl3 -y
