@@ -30,7 +30,7 @@ resource "aws_vpc_endpoint" "west" {
   vpc_id             = aws_vpc.west.id
   service_name       = mongodbatlas_privatelink_endpoint.west.endpoint_service_name
   vpc_endpoint_type  = "Interface"
-  subnet_ids         = [aws_subnet.west-public.id]
+  subnet_ids         = [aws_subnet.west_public.id]
   security_group_ids = [aws_security_group.west_sg_ssh.id, aws_security_group.west_sg_mongod.id]
 }
 

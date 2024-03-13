@@ -22,3 +22,18 @@ variable "key_deployed" {
   description = "SSH Key"
   type = string
 }
+
+variable "owner" {
+  description = "owner"
+  type = string
+}
+
+variable "keep_until" {
+  description = "keep resources until"
+  type = string
+}
+
+variable "vpn_blocks" {
+  description = "IP blocks for VPN"
+  type = list(string)
+}

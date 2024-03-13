@@ -6,6 +6,8 @@ resource "aws_vpc" "west" {
 
   tags = {
     Name = "tf-main"
+    owner = var.owner
+    keep_until = var.keep_until
   }
 }
 
@@ -16,6 +18,8 @@ resource "aws_subnet" "west_public" {
 
   tags = {
     Name = "tf-public1"
+    owner = var.owner
+    keep_until = var.keep_until
   }
 }
 
@@ -36,7 +40,7 @@ resource "aws_security_group" "west_sg_ssh" {
   }
   vpc_id = aws_vpc.west.id
   ingress {
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.vpn_blocks
     protocol    = "tcp"
     from_port   = 22
     to_port     = 22
@@ -57,7 +61,7 @@ resource "aws_security_group" "west_sg_mongod" {
   }
   vpc_id = aws_vpc.west.id
   ingress {
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [aws_vpc.east.cidr_block, aws_vpc.west.cidr_block]
     protocol    = "tcp"
     from_port   = 1024
     to_port     = 1073
@@ -86,6 +90,8 @@ resource "aws_instance" "west_instance" {
 
   tags = {
     Name = "tf-public1"
+    owner = var.owner
+    keep_until = var.keep_until
   }
 }
 
@@ -101,6 +107,8 @@ resource "aws_network_interface" "west_netint" {
 
   tags = {
     Name = "tf-public1"
+    owner = var.owner
+    keep_until = var.keep_until
   }
 }
 
@@ -110,6 +118,8 @@ resource "aws_internet_gateway" "west_gw" {
 
   tags = {
     Name = "tf-west-main"
+    owner = var.owner
+    keep_until = var.keep_until
   }
 }
 
@@ -118,7 +128,7 @@ resource "aws_route_table" "west_rt" {
   vpc_id   = aws_vpc.west.id
 
   route {
-    cidr_block = "10.1.0.0/16"
+    cidr_block = aws_vpc.west.cidr_block
     gateway_id = "local"
   }
 
@@ -128,12 +138,25 @@ resource "aws_route_table" "west_rt" {
   }
 
   route {
-    cidr_block                = "10.0.0.0/16"
+    cidr_block                = aws_vpc.east.cidr_block
     vpc_peering_connection_id = aws_vpc_peering_connection.test.id
   }
 
   tags = {
     Name = "tf-west-rt"
+    owner = var.owner
+    keep_until = var.keep_until
   }
 }
 
+resource "aws_route_table_association" "west_pub_rt_assc" {
+  provider             = aws.west
+  subnet_id      = aws_subnet.west_public.id
+  route_table_id = aws_route_table.west_rt.id
+}
+
+resource "aws_route_table_association" "west_pri_rt_assc" {
+  provider             = aws.west
+  subnet_id      = aws_subnet.west_private.id
+  route_table_id = aws_route_table.west_rt.id
+}
