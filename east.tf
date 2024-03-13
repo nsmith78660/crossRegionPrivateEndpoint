@@ -4,6 +4,8 @@ resource "aws_vpc" "east" {
 
   tags = {
     Name = "tf-east"
+    owner = var.owner
+    keep_until = var.keep_until
   }
 }
 
@@ -13,6 +15,8 @@ resource "aws_subnet" "east_public1" {
 
   tags = {
     Name = "tf-east-public1"
+    owner = var.owner
+    keep_until = var.keep_until
   }
 }
 
@@ -22,6 +26,8 @@ resource "aws_subnet" "east_private1" {
 
   tags = {
     Name = "tf-east-private1"
+    owner = var.owner
+    keep_until = var.keep_until
   }
 }
 
@@ -31,7 +37,7 @@ resource "aws_security_group" "east_sg_ssh" {
   }
   vpc_id = aws_vpc.east.id
   ingress {
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.vpn_blocks
     protocol    = "tcp"
     from_port   = 22
     to_port     = 22
@@ -51,7 +57,7 @@ resource "aws_security_group" "east_sg_mongod" {
   }
   vpc_id = aws_vpc.east.id
   ingress {
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [aws_vpc.east.cidr_block, aws_vpc.west.cidr_block]
     protocol    = "tcp"
     from_port   = 1024
     to_port     = 1073
@@ -80,6 +86,8 @@ resource "aws_instance" "east_public" {
 
   tags = {
     Name = "tf-east-public"
+    owner = var.owner
+    keep_until = var.keep_until
   }
 }
 
@@ -95,6 +103,8 @@ resource "aws_network_interface" "east_net_int" {
 
   tags = {
     Name = "tf-east-public"
+    owner = var.owner
+    keep_until = var.keep_until
   }
 }
 
@@ -103,6 +113,8 @@ resource "aws_internet_gateway" "east" {
 
   tags = {
     Name = "tf-east-main"
+    owner = var.owner
+    keep_until = var.keep_until
   }
 }
 
@@ -110,7 +122,7 @@ resource "aws_route_table" "east_rt" {
   vpc_id = aws_vpc.east.id
 
   route {
-    cidr_block = "10.0.0.0/16"
+    cidr_block = aws_vpc.east.cidr_block
     gateway_id = "local"
   }
 
@@ -120,11 +132,23 @@ resource "aws_route_table" "east_rt" {
   }
 
   route {
-    cidr_block                = "10.1.0.0/16"
+    cidr_block                = aws_vpc.west.cidr_block
     vpc_peering_connection_id = aws_vpc_peering_connection.test.id
   }
 
   tags = {
     Name = "tf-east-rt"
+    owner = var.owner
+    keep_until = var.keep_until
   }
+}
+
+resource "aws_route_table_association" "east_pub_rt_assc" {
+  subnet_id      = aws_subnet.east_public1.id
+  route_table_id = aws_route_table.east_rt.id
+}
+
+resource "aws_route_table_association" "east_pri_rt_assc" {
+  subnet_id      = aws_subnet.east_private1.id
+  route_table_id = aws_route_table.east_rt.id
 }

@@ -1,4 +1,4 @@
-#cloud-config-mongosh
+#cloud-config
 write_files:
   - path: /etc/yum.repos.d/mongodb-org-7.0.repo
     content: |
